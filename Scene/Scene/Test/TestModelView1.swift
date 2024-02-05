@@ -16,7 +16,12 @@ struct TestModelView1: View {
 }
 
 struct TestModel: View {
-    
+
+    @State var models = [
+        Model(id: 0, name: "1", modelName: "Concrete-Smooth.usdz", details: "test"),
+        Model(id: 1, name: "2", modelName: "Asphalt_withCrack-All-SphereOnly-Plane.usdz", details: "test")
+    ]
+
     @State var index = 0
     @State var isRolling = false
     @State var lastDragAmount: CGFloat = 0
@@ -27,15 +32,14 @@ struct TestModel: View {
     @State var velocity: CGFloat = 30
 
     @State var glassHead: SCNScene? = SCNScene(named: "head05.scn") // Add this line
-    
+    @State var crackScene = SCNScene(named: "Asphalt_withCrack-All-SphereOnly-Plane.usdz")
+
     @State var red: CGFloat = 0.5
     @State var green: CGFloat = 0.5
     @State var blue: CGFloat = 0.5
     let alpha: CGFloat = 1.0
     
     var body: some View {
-        let crackScene = SCNScene(named: "Asphalt_withCrack-All-SphereOnly-Plane.usdz")
-        
         let backgroundImage = UIImage(named: "asphalt")
         glassHead?.background.contents = backgroundImage
         crackScene?.background.contents = UIColor.black
@@ -47,6 +51,14 @@ struct TestModel: View {
                     .edgesIgnoringSafeArea(.all)
                     .frame(width: UIScreen.main.bounds.width*2, height: UIScreen.main.bounds.height*2)
                     .position(x: UIScreen.main.bounds.width/2, y: UIScreen.main.bounds.height/2)
+                // default 상태가 움직이도록
+                    .onAppear {
+                        let headRotationAction = SCNAction.repeatForever(SCNAction.rotate(by: .pi*1, around: SCNVector3(1, 0, 0), duration: 2))
+                        self.glassHead?.rootNode.runAction(headRotationAction)
+                        let crackRotationAction = SCNAction.repeatForever(SCNAction.rotate(by: .pi*1, around: SCNVector3(-1, 0, 0), duration: 8))
+                        self.crackScene?.rootNode.runAction(crackRotationAction)
+                        changeAnimation(0.5, 0.5, 0.5)
+                    }
                     .gesture(
                         DragGesture()
                             .onChanged { change in
@@ -71,6 +83,7 @@ struct TestModel: View {
                                     withAnimation {
                                         self.rotationDuration += 0.6
                                     }
+                                    // crackScene = SCNScene(named: models[1].modelName)
                                     let rotationAction = SCNAction.rotate(by: .pi*2, around: SCNVector3(1, 0, 0), duration: self.rotationDuration)
                                     glassHead?.rootNode.runAction(rotationAction)
                                     print("아래로 내려가는: \(velocity)")
@@ -87,7 +100,7 @@ struct TestModel: View {
                                 self.timer = nil
                             }
                     )
-                
+
                 // Front
                 SceneView(scene: glassHead, options: [.autoenablesDefaultLighting,.allowsCameraControl])
                     .frame(width: UIScreen.main.bounds.width/4+80 , height: UIScreen.main.bounds.height/4, alignment: .center)
